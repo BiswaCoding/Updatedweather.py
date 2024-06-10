@@ -1,0 +1,106 @@
+To enhance the UI of the Weather App, we can focus on improving the layout, adding better spacing, using consistent colors, and refining the overall design elements. Here's an updated version of the code with a more polished UI:
+
+```python
+import tkinter as tk
+from tkinter import ttk, messagebox
+from geopy.geocoders import Nominatim
+from timezonefinder import TimezoneFinder
+from datetime import datetime
+import requests
+import pytz
+
+class WeatherApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Weather App")
+        self.geometry("900x500+300+200")
+        self.resizable(False, False)
+        self.configure(bg="#f0f0f0")
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        # Search Frame
+        self.search_frame = tk.Frame(self, bg="#f0f0f0")
+        self.search_frame.place(x=20, y=20)
+
+        self.search_image = tk.PhotoImage(file="search.png")
+        self.search_label = tk.Label(self.search_frame, image=self.search_image, bg="#f0f0f0")
+        self.search_label.pack(side=tk.LEFT, padx=(0, 10))
+
+        self.textfield = tk.Entry(self.search_frame, justify="center", width=20, font=("Arial", 20))
+        self.textfield.pack(side=tk.LEFT)
+        self.textfield.focus()
+
+        self.search_icon = tk.PhotoImage(file="search_icon.png")
+        self.search_button = tk.Button(self.search_frame, image=self.search_icon, borderwidth=0, cursor="hand2", bg="#404040", command=self.get_weather)
+        self.search_button.pack(side=tk.LEFT, padx=(10, 0))
+
+        # Logo
+        self.logo_image = tk.PhotoImage(file="logo.png")
+        self.logo_label = tk.Label(self, image=self.logo_image, bg="#f0f0f0")
+        self.logo_label.place(x=400, y=20, anchor="n")
+
+        # Time
+        self.time_frame = tk.Frame(self, bg="#f0f0f0")
+        self.time_frame.place(x=30, y=160)
+
+        self.name_label = tk.Label(self.time_frame, font=("Arial", 15, "bold"), text="CURRENT WEATHER", bg="#f0f0f0")
+        self.name_label.pack(side=tk.TOP)
+
+        self.clock_label = tk.Label(self.time_frame, font=("Helvetica", 20), bg="#f0f0f0")
+        self.clock_label.pack(side=tk.BOTTOM)
+
+        # Weather Info
+        self.weather_frame = tk.Frame(self, bg="#f0f0f0")
+        self.weather_frame.place(x=30, y=220)
+
+        labels = [("Temperature", "#ee666d"), ("Condition", "#1AB5EF"), ("Wind", "#aab5ef"), ("Humidity", "#f44336"), ("Description", "#ee666d"), ("Pressure", "#1AB5EF")]
+        for idx, (text, bg_color) in enumerate(labels):
+            label = tk.Label(self.weather_frame, text=text, font=("Arial", 15, 'bold'), fg="white", bg=bg_color, padx=10, pady=5)
+            label.grid(row=0, column=idx, padx=5, pady=5)
+
+        self.weather_data_labels = []
+        for i in range(6):
+            data_label = tk.Label(self.weather_frame, font=("Arial", 15), bg="#f0f0f0")
+            data_label.grid(row=1, column=i, padx=5, pady=5)
+            self.weather_data_labels.append(data_label)
+
+    def get_weather(self):
+        try:
+            city = self.textfield.get()
+
+            geolocator = Nominatim(user_agent="geoapiExercises")
+            location = geolocator.geocode(city)
+            obj = TimezoneFinder()
+            result = obj.timezone_at(lng=location.longitude, lat=location.latitude)
+
+            home = pytz.timezone(result)
+            local_time = datetime.now(home)
+            current_time = local_time.strftime("%I:%M %p")
+            self.clock_label.config(text=current_time)
+
+            api = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid=20a1c5cb1e4524cf36eb403fe5108b43"
+            json_data = requests.get(api).json()
+            condition = json_data['weather'][0]['main']
+            description = json_data['weather'][0]['description']
+            temp = int(json_data['main']['temp'] - 273.15)
+            pressure = json_data['main']['pressure']
+            humidity = json_data['main']['humidity']
+            wind = json_data['wind']['speed']
+
+            self.weather_data_labels[0].config(text=f"{temp}°C")
+            self.weather_data_labels[1].config(text=condition)
+            self.weather_data_labels[2].config(text=f"{wind} m/s")
+            self.weather_data_labels[3].config(text=f"{humidity}%")
+            self.weather_data_labels[4].config(text=description)
+            self.weather_data_labels[5].config(text=f"{pressure} hPa")
+
+        except Exception as e:
+            messagebox.showerror("Weather App", "Invalid Entry!!")
+
+if __name__ == "__main__":
+    app = WeatherApp()
+    app.mainloop()
+```
+
